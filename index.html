@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Fortune Poker — $3/$5/$10 NLH</title>
+  <title>Fortune Poker — $1/$3 and $3/$5/$10 NLH</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <style>
     :root {
@@ -27,7 +27,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.4;
     }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; }
     .brand {
       margin: 0 0 8px;
       color: var(--muted);
@@ -35,29 +35,34 @@
       letter-spacing: 0.14em;
       text-transform: uppercase;
     }
-    .brand span { color: var(--yellow); }
-    h1 {
+    .game-line {
       margin: 0;
-      font-size: clamp(1.45rem, 3vw, 2.05rem);
+      font-size: clamp(1.15rem, 2.2vw, 1.55rem);
       font-weight: 650;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
     }
+    .game-line + .game-line { margin-top: 4px; }
     .checked { margin: 10px 0 0; color: var(--muted); }
     a { color: var(--blue); }
-    .panel {
+    .games {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
       margin-top: 22px;
+    }
+    .panel {
       padding: 18px 18px 12px;
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 14px;
     }
-    h2 { margin: 0; font-size: 1.05rem; font-weight: 620; }
-    .sub { margin: 6px 0 16px; color: var(--muted); }
+    h2 { margin: 0 0 12px; font-size: 1.05rem; font-weight: 620; }
+    .sub { margin: -6px 0 12px; color: var(--muted); font-size: 0.85rem; }
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 14px;
     }
     .stat {
@@ -69,41 +74,57 @@
     }
     .stat b {
       display: block;
-      font-size: 1.6rem;
+      font-size: 1.45rem;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.03em;
     }
-    .stat span { color: var(--muted); font-size: 0.82rem; }
-    .chart-wrap { position: relative; height: min(420px, 68vw); }
-    #empty, #error { margin: 8px 0 12px; }
-    #empty { color: var(--muted); }
+    .stat span { color: var(--muted); font-size: 0.78rem; }
+    .chart-wrap { position: relative; height: 320px; }
+    .empty, #error { margin: 8px 0 12px; }
+    .empty { color: var(--muted); }
     #error { color: var(--danger); }
     footer { margin-top: 14px; color: var(--muted); font-size: 0.85rem; }
     footer p { margin: 4px 0; }
-    @media (max-width: 640px) {
-      .stats { grid-template-columns: 1fr; }
+    @media (max-width: 860px) {
+      .games, .stats { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <p class="brand">Fortune Poker <span>$3/$5/$10 NLH</span></p>
-      <h1 id="headline" aria-live="polite">Loading $3/$5/$10 NLH…</h1>
+      <p class="brand">Fortune Poker</p>
+      <div id="headline" aria-live="polite">
+        <p class="game-line" id="line-13">Loading…</p>
+        <p class="game-line" id="line-3510"></p>
+      </div>
       <p class="checked">Checked <time id="checked">…</time> PT · <a href="https://fortunepokerroom.com/" target="_blank" rel="noopener noreferrer">fortunepokerroom.com</a></p>
     </header>
-    <section class="panel">
-      <h2>Fortune Poker — active tables and waitlist</h2>
-      <p class="sub">Latest 60 days. This page reloads the history file about every 10 minutes.</p>
-      <div class="stats">
-        <div class="stat" style="--accent: var(--blue)"><b id="stat-active">–</b><span>Active tables</span></div>
-        <div class="stat" style="--accent: var(--green)"><b id="stat-wait">–</b><span>Waitlist players</span></div>
-        <div class="stat" style="--accent: var(--yellow)"><b id="stat-line">4</b><span>4-active-table threshold</span></div>
-      </div>
-      <div class="chart-wrap" id="chart-wrap"><canvas id="chart" aria-label="Active tables and waitlist"></canvas></div>
-      <p id="empty" hidden></p>
-      <p id="error" role="alert" hidden></p>
-    </section>
+    <div class="games">
+      <section class="panel">
+        <h2>$1/$3 NLH</h2>
+        <p class="sub">Latest 60 days.</p>
+        <div class="stats">
+          <div class="stat" style="--accent: var(--blue)"><b id="stat-active-13">–</b><span>Active tables</span></div>
+          <div class="stat" style="--accent: var(--green)"><b id="stat-wait-13">–</b><span>Waitlist players</span></div>
+          <div class="stat" style="--accent: var(--yellow)"><b>4</b><span>4-active-table threshold</span></div>
+        </div>
+        <div class="chart-wrap" id="wrap-13"><canvas id="chart-13" aria-label="$1/$3 active tables and waitlist"></canvas></div>
+        <p class="empty" id="empty-13" hidden></p>
+      </section>
+      <section class="panel">
+        <h2>$3/$5/$10 NLH</h2>
+        <p class="sub">Latest 60 days.</p>
+        <div class="stats">
+          <div class="stat" style="--accent: var(--blue)"><b id="stat-active-3510">–</b><span>Active tables</span></div>
+          <div class="stat" style="--accent: var(--green)"><b id="stat-wait-3510">–</b><span>Waitlist players</span></div>
+          <div class="stat" style="--accent: var(--yellow)"><b>4</b><span>4-active-table threshold</span></div>
+        </div>
+        <div class="chart-wrap" id="wrap-3510"><canvas id="chart-3510" aria-label="$3/$5/$10 active tables and waitlist"></canvas></div>
+        <p class="empty" id="empty-3510" hidden></p>
+      </section>
+    </div>
+    <p id="error" role="alert" hidden></p>
     <footer>
       <p id="started"></p>
       <p>Personal monitor. Not affiliated with Fortune Poker. The yellow line is visual only.</p>
@@ -116,18 +137,15 @@
     const BLUE = "#6eb6ff";
     const GREEN = "#3dce86";
     const YELLOW = "#e6c14a";
+    const GAMES = [
+      { stake: "$1/$3 NLH", active: "active_tables_1_3", wait: "waitlist_players_1_3", line: "line-13", statActive: "stat-active-13", statWait: "stat-wait-13", wrap: "wrap-13", empty: "empty-13", canvas: "chart-13" },
+      { stake: "$3/$5/$10 NLH", active: "active_tables", wait: "waitlist_players", line: "line-3510", statActive: "stat-active-3510", statWait: "stat-wait-3510", wrap: "wrap-3510", empty: "empty-3510", canvas: "chart-3510" }
+    ];
 
-    const headline = document.getElementById("headline");
     const checked = document.getElementById("checked");
-    const statActive = document.getElementById("stat-active");
-    const statWait = document.getElementById("stat-wait");
     const started = document.getElementById("started");
-    const empty = document.getElementById("empty");
     const errorEl = document.getElementById("error");
-    const chartWrap = document.getElementById("chart-wrap");
-    const canvas = document.getElementById("chart");
-
-    let chart;
+    const charts = {};
     let rowsCache = null;
 
     const thresholdLine = {
@@ -159,51 +177,37 @@
       errorEl.textContent = message || "";
     }
 
-    function render(rows) {
-      const cutoff = Date.now() - HISTORY_DAYS * 24 * 60 * 60 * 1000;
-      rows = (Array.isArray(rows) ? rows : [])
-        .filter((row) => row && typeof row.active_tables === "number" && typeof row.waitlist_players === "number" && Date.parse(row.ts) >= cutoff)
-        .slice()
-        .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
+    function series(rows, key) {
+      return rows.map((row) => (typeof row[key] === "number" ? row[key] : null));
+    }
 
-      const last = rows[rows.length - 1];
-      if (!last) {
-        headline.textContent = "No $3/$5/$10 NLH samples yet";
-        checked.textContent = "—";
-        checked.removeAttribute("datetime");
-        statActive.textContent = "–";
-        statWait.textContent = "–";
-        started.textContent = "History starts after the first sample.";
+    function draw(game, rows) {
+      const canvas = document.getElementById(game.canvas);
+      const wrap = document.getElementById(game.wrap);
+      const empty = document.getElementById(game.empty);
+      const active = series(rows, game.active);
+      const waiting = series(rows, game.wait);
+      const hasPoints = active.some((value) => value !== null);
+      if (charts[game.canvas]) {
+        charts[game.canvas].destroy();
+        charts[game.canvas] = null;
+      }
+      if (!hasPoints) {
+        wrap.hidden = true;
         empty.hidden = false;
-        empty.textContent = "No samples yet. Run python3 update.py, then reload.";
-        chartWrap.hidden = true;
-        if (chart) {
-          chart.destroy();
-          chart = null;
-        }
+        empty.textContent = "No " + game.stake + " samples yet.";
         return;
       }
-
       empty.hidden = true;
-      chartWrap.hidden = false;
-      headline.textContent =
-        countPhrase(last.active_tables, "active $3/$5/$10 NLH table", "active $3/$5/$10 NLH tables")
-        + " · "
-        + countPhrase(last.waitlist_players, "player waiting", "players waiting");
-      checked.textContent = last.ts_label;
-      checked.setAttribute("datetime", last.ts);
-      statActive.textContent = String(last.active_tables);
-      statWait.textContent = String(last.waitlist_players);
-      const first = rows[0];
-      started.textContent = "History starts " + first.ts_label + " PT · "
-        + countPhrase(rows.length, "sample", "samples") + ".";
-
+      wrap.hidden = false;
       const labels = rows.map((row) => row.ts_label);
-      const peak = rows.reduce((max, row) => Math.max(max, row.active_tables, row.waitlist_players), THRESHOLD);
+      const peak = rows.reduce((max, row) => {
+        const tables = row[game.active];
+        const list = row[game.wait];
+        return Math.max(max, typeof tables === "number" ? tables : 0, typeof list === "number" ? list : 0);
+      }, THRESHOLD);
       const dots = rows.length > 48 ? 0 : 3;
-
-      if (chart) chart.destroy();
-      chart = new Chart(canvas, {
+      charts[game.canvas] = new Chart(canvas, {
         type: "line",
         plugins: [thresholdLine],
         data: {
@@ -211,23 +215,25 @@
           datasets: [
             {
               label: "Active tables",
-              data: rows.map((row) => row.active_tables),
+              data: active,
               borderColor: BLUE,
               backgroundColor: BLUE,
               borderWidth: 2,
               pointRadius: dots,
               pointHoverRadius: 4,
-              tension: 0
+              tension: 0,
+              spanGaps: false
             },
             {
               label: "Waitlist players",
-              data: rows.map((row) => row.waitlist_players),
+              data: waiting,
               borderColor: GREEN,
               backgroundColor: GREEN,
               borderWidth: 2,
               pointRadius: dots,
               pointHoverRadius: 4,
-              tension: 0
+              tension: 0,
+              spanGaps: false
             },
             {
               label: "4-active-table threshold",
@@ -249,16 +255,12 @@
           animation: false,
           interaction: { mode: "index", intersect: false },
           plugins: {
-            legend: {
-              labels: { boxWidth: 28, color: "#e7f0ea" }
-            },
-            tooltip: {
-              filter: (item) => item.datasetIndex !== 2
-            }
+            legend: { labels: { boxWidth: 28, color: "#e7f0ea" } },
+            tooltip: { filter: (item) => item.datasetIndex !== 2 }
           },
           scales: {
             x: {
-              ticks: { maxTicksLimit: 8, maxRotation: 0, color: "#93a79b" },
+              ticks: { maxTicksLimit: 6, maxRotation: 0, color: "#93a79b" },
               grid: { display: false }
             },
             y: {
@@ -269,6 +271,50 @@
             }
           }
         }
+      });
+    }
+
+    function render(rows) {
+      const cutoff = Date.now() - HISTORY_DAYS * 24 * 60 * 60 * 1000;
+      rows = (Array.isArray(rows) ? rows : [])
+        .filter((row) => row && Date.parse(row.ts) >= cutoff && (typeof row.active_tables === "number" || typeof row.active_tables_1_3 === "number"))
+        .slice()
+        .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
+
+      const last = rows[rows.length - 1];
+      if (!last) {
+        checked.textContent = "—";
+        checked.removeAttribute("datetime");
+        started.textContent = "History starts after the first sample.";
+        GAMES.forEach((game) => {
+          document.getElementById(game.line).textContent = "No " + game.stake + " samples yet";
+          document.getElementById(game.statActive).textContent = "–";
+          document.getElementById(game.statWait).textContent = "–";
+          draw(game, []);
+        });
+        return;
+      }
+
+      checked.textContent = last.ts_label;
+      checked.setAttribute("datetime", last.ts);
+      started.textContent = "History starts " + rows[0].ts_label + " PT · "
+        + countPhrase(rows.length, "sample", "samples") + ".";
+      GAMES.forEach((game) => {
+        const tables = last[game.active];
+        const waiting = last[game.wait];
+        const line = document.getElementById(game.line);
+        if (typeof tables !== "number") {
+          line.textContent = "No " + game.stake + " samples yet";
+          document.getElementById(game.statActive).textContent = "–";
+          document.getElementById(game.statWait).textContent = "–";
+        } else {
+          line.textContent = countPhrase(tables, "active " + game.stake + " table", "active " + game.stake + " tables")
+            + " · "
+            + countPhrase(waiting, "player waiting", "players waiting");
+          document.getElementById(game.statActive).textContent = String(tables);
+          document.getElementById(game.statWait).textContent = String(waiting);
+        }
+        draw(game, rows);
       });
     }
 

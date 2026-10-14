@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scrape Fortune Poker $3/$5/$10 NLH into data/history.json. Stdlib only."""
+"""Scrape Fortune Poker $1/$3 and $3/$5/$10 NLH into data/history.json. Stdlib only."""
 
 from __future__ import annotations
 
@@ -46,29 +46,44 @@ def _overlay_count(token: str) -> int:
     return int(token)
 
 
-def parse_board(html: str) -> tuple[int, int]:
-    """Return (active $3/$5/$10 NLH tables, waitlist players)."""
+# (json key prefix, icon filename token). List icons are "{token}_list".
+STAKES = (
+    ("1_3", "FP_1_3_NL"),
+    ("3_5_10", "FP_3_5_10_NL"),
+)
+
+
+def parse_board(html: str) -> dict[str, int]:
+    """Return active-table and waitlist counts for $1/$3 and $3/$5/$10 NLH."""
     if not BOARD_RE.search(html):
         raise ValueError("board markup not recognized")
 
-    tables = 0
-    wait: int | None = None
+    tables = {key: 0 for key, _ in STAKES}
+    waits: dict[str, int | None] = {key: None for key, _ in STAKES}
     for tag in IMG_RE.findall(html):
         attrs = _attrs(tag)
         classes = set((attrs.get("class") or "").lower().split())
         src = attrs.get("src") or ""
-        if "pokertable" in classes and "FP_3_5_10_NL" in src and "FP_3_5_10_NL_list" not in src:
-            tables += 1
-            continue
-        if "pokerlist" in classes and "FP_3_5_10_NL_list" in tag:
-            match = OVERLAY_RE.search(src) or OVERLAY_RE.search(tag)
-            if not match:
-                raise ValueError("waitlist overlay not recognized")
-            count = _overlay_count(match.group(1))
-            if wait is not None and wait != count:
-                raise ValueError("conflicting waitlist overlays")
-            wait = count
-    return tables, 0 if wait is None else wait
+        for key, token in STAKES:
+            list_token = token + "_list"
+            if "pokertable" in classes and token in src and list_token not in src:
+                tables[key] += 1
+                break
+            if "pokerlist" in classes and list_token in tag:
+                match = OVERLAY_RE.search(src) or OVERLAY_RE.search(tag)
+                if not match:
+                    raise ValueError("waitlist overlay not recognized")
+                count = _overlay_count(match.group(1))
+                if waits[key] is not None and waits[key] != count:
+                    raise ValueError("conflicting waitlist overlays")
+                waits[key] = count
+                break
+    return {
+        "active_tables_1_3": tables["1_3"],
+        "waitlist_players_1_3": 0 if waits["1_3"] is None else waits["1_3"],
+        "active_tables": tables["3_5_10"],
+        "waitlist_players": 0 if waits["3_5_10"] is None else waits["3_5_10"],
+    }
 
 
 def pacific_now() -> datetime:
@@ -118,22 +133,20 @@ def fetch_board(url: str = BOARD_URL) -> str:
 
 
 def append_sample(html: str, path: Path = OUT, moment: datetime | None = None) -> dict:
-    active, waiting = parse_board(html)
+    counts = parse_board(html)
     moment = moment or pacific_now()
     rows = prune(load_history(path), moment)
     rows.append(
         {
             "ts": moment.isoformat(timespec="seconds"),
             "ts_label": format_label(moment),
-            "active_tables": active,
-            "waitlist_players": waiting,
+            **counts,
         }
     )
     save_history(path, rows)
     return {
         "ok": True,
-        "active_tables": active,
-        "waitlist_players": waiting,
+        **counts,
         "checked_pacific": format_label(moment),
         "samples": len(rows),
         "out": str(path),
@@ -145,25 +158,35 @@ def emit(payload: dict) -> None:
 
 
 def _self_check() -> None:
+    def counts(tables_1_3: int, wait_1_3: int, tables_3510: int, wait_3510: int) -> dict[str, int]:
+        return {
+            "active_tables_1_3": tables_1_3,
+            "waitlist_players_1_3": wait_1_3,
+            "active_tables": tables_3510,
+            "waitlist_players": wait_3510,
+        }
+
     open_html = """
     <img class="PokerTable" src="https://www.pokerwa.com/images/icons/FP_4_8_w90px.png">
+    <img class="PokerTable" src="https://www.pokerwa.com/images/icons/FP_1_3_NL_v2_w90px.png">
+    <img class="PokerTable" src="https://www.pokerwa.com/images/icons/FP_1_3_NL_v2_w90px.png">
     <img class="PokerTable" src="https://www.pokerwa.com/images/icons/FP_3_5_10_NL_w90px.png">
     <img src="https://www.pokerwa.com/images/icons/FP_3_5_10_NL_w90px.png" class="PokerTable">
     <img class="PokerList" style="background:url(https://www.pokerwa.com/images/icons/FP_1_3_NL_list_v3_w65px.png);" src="https://www.pokerwa.com/images/icons/DL2_WL_overlay_5_w65px.png">
     <img class="PokerList" style="background:url(https://www.pokerwa.com/images/icons/FP_3_5_10_NL_list_w65px.png);" src="https://www.pokerwa.com/images/icons/DL2_WL_overlay_OPEN_w65px.png">
     """
-    assert parse_board(open_html) == (2, 0)
-    assert parse_board(open_html.replace("DL2_WL_overlay_OPEN", "DL2_WL_overlay_6")) == (2, 6)
-    assert parse_board(open_html.replace("DL2_WL_overlay_OPEN", "DL2_WL_overlay_8plus")) == (2, 8)
+    assert parse_board(open_html) == counts(2, 5, 2, 0)
+    assert parse_board(open_html.replace("DL2_WL_overlay_OPEN", "DL2_WL_overlay_6")) == counts(2, 5, 2, 6)
+    assert parse_board(open_html.replace("DL2_WL_overlay_OPEN", "DL2_WL_overlay_8plus")) == counts(2, 5, 2, 8)
 
     single = """
     <img class='PokerTable' src='https://x/FP_3_5_10_NL_w90px.png'>
     <img class='PokerList' style='background:url(https://x/FP_3_5_10_NL_list.png)' src='https://x/DL2_WL_overlay_3_w65px.png'>
     """
-    assert parse_board(single) == (1, 3)
+    assert parse_board(single) == counts(0, 0, 1, 3)
     assert parse_board(
         '<img class="PokerTable" src="https://www.pokerwa.com/images/icons/FP_1_3_NL_v2_w90px.png">'
-    ) == (0, 0)
+    ) == counts(1, 0, 0, 0)
 
     try:
         parse_board("<html>no board</html>")
