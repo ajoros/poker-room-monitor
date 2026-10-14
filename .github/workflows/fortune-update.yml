@@ -1,26 +1,50 @@
 name: Update Fortune history
 
+# ponytail: GitHub's schedule trigger is best-effort and often skips 10-minute crons, so each
+# run loops every 10 minutes for ~5h40m, then dispatches its successor. The hourly cron only
+# restarts the chain if it breaks. Ceiling: one runner busy 24/7 (free on public repos).
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
+
+concurrency:
+  group: fortune-update
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
-      - name: Scrape and write data/history.json
-        run: python3 update.py
-
-      - name: Commit history if changed
+      - name: Scrape every 10 minutes and commit history
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/history.json
-          git diff --staged --quiet || git commit -m "chore: refresh Fortune history"
-          git push
+          end=$(( $(date +%s) + 340 * 60 ))
+          while :; do
+            start=$(date +%s)
+            git pull -q --rebase origin main || true
+            python3 update.py || true
+            git add data/history.json
+            if ! git diff --staged --quiet; then
+              git commit -q -m "chore: refresh Fortune history"
+              git push -q origin HEAD:main || { git pull -q --rebase origin main && git push -q origin HEAD:main; } || true
+            fi
+            next=$(( start + 600 ))
+            [ "$next" -ge "$end" ] && break
+            wait=$(( next - $(date +%s) ))
+            [ "$wait" -gt 0 ] && sleep "$wait"
+          done
+
+      - name: Start the next run
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run fortune-update.yml --ref main -R "$GITHUB_REPOSITORY"

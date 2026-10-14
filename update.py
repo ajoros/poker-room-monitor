@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 BOARD_URL = "https://pokerwa.com/fortunepoker/index.php"
 UA = "FortunePokerMonitor/1.0 (personal; polite ~10min; not affiliated)"
-RETENTION_DAYS = 60
+RETENTION_DAYS = 30
 PACIFIC = ZoneInfo("America/Los_Angeles")
 
 ROOT = Path(__file__).resolve().parent
