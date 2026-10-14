@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fortune Poker — $3/$5/$10 NLH</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #101614;
+      --panel: #18211c;
+      --text: #e7f0ea;
+      --muted: #93a79b;
+      --line: #2c3b33;
+      --blue: #6eb6ff;
+      --green: #3dce86;
+      --yellow: #e6c14a;
+      --danger: #ffb4b4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 500px at 10% -10%, #1c3328 0%, transparent 55%),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.4;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
+    .brand {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .brand span { color: var(--yellow); }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 3vw, 2.05rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .checked { margin: 10px 0 0; color: var(--muted); }
+    a { color: var(--blue); }
+    .panel {
+      margin-top: 22px;
+      padding: 18px 18px 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+    h2 { margin: 0; font-size: 1.05rem; font-weight: 620; }
+    .sub { margin: 6px 0 16px; color: var(--muted); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat {
+      padding: 10px 12px 12px;
+      background: #121a16;
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--accent, var(--line));
+      border-radius: 10px;
+    }
+    .stat b {
+      display: block;
+      font-size: 1.6rem;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+    }
+    .stat span { color: var(--muted); font-size: 0.82rem; }
+    .chart-wrap { position: relative; height: min(420px, 68vw); }
+    #empty, #error { margin: 8px 0 12px; }
+    #empty { color: var(--muted); }
+    #error { color: var(--danger); }
+    footer { margin-top: 14px; color: var(--muted); font-size: 0.85rem; }
+    footer p { margin: 4px 0; }
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="brand">Fortune Poker <span>$3/$5/$10 NLH</span></p>
+      <h1 id="headline" aria-live="polite">Loading $3/$5/$10 NLH…</h1>
+      <p class="checked">Checked <time id="checked">…</time> PT · <a href="https://fortunepokerroom.com/" target="_blank" rel="noopener noreferrer">fortunepokerroom.com</a></p>
+    </header>
+    <section class="panel">
+      <h2>Fortune Poker — active tables and waitlist</h2>
+      <p class="sub">Rolling 90 days. This page reloads the history file about every 10 minutes.</p>
+      <div class="stats">
+        <div class="stat" style="--accent: var(--blue)"><b id="stat-active">–</b><span>Active tables</span></div>
+        <div class="stat" style="--accent: var(--green)"><b id="stat-wait">–</b><span>Waitlist players</span></div>
+        <div class="stat" style="--accent: var(--yellow)"><b id="stat-line">4</b><span>4-active-table threshold</span></div>
+      </div>
+      <div class="chart-wrap" id="chart-wrap"><canvas id="chart" aria-label="Active tables and waitlist"></canvas></div>
+      <p id="empty" hidden></p>
+      <p id="error" role="alert" hidden></p>
+    </section>
+    <footer>
+      <p id="started"></p>
+      <p>Personal monitor. Not affiliated with Fortune Poker. The yellow line is visual only.</p>
+    </footer>
+  </div>
+  <script>
+    const THRESHOLD = 4;
+    const RELOAD_MS = 10 * 60 * 1000;
+    const BLUE = "#6eb6ff";
+    const GREEN = "#3dce86";
+    const YELLOW = "#e6c14a";
+
+    const headline = document.getElementById("headline");
+    const checked = document.getElementById("checked");
+    const statActive = document.getElementById("stat-active");
+    const statWait = document.getElementById("stat-wait");
+    const started = document.getElementById("started");
+    const empty = document.getElementById("empty");
+    const errorEl = document.getElementById("error");
+    const chartWrap = document.getElementById("chart-wrap");
+    const canvas = document.getElementById("chart");
+
+    let chart;
+    let rowsCache = null;
+
+    const thresholdLine = {
+      id: "thresholdLine",
+      afterDraw(chart) {
+        const yScale = chart.scales.y;
+        if (!yScale) return;
+        const y = yScale.getPixelForValue(THRESHOLD);
+        const { left, right } = chart.chartArea;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.strokeStyle = YELLOW;
+        ctx.setLineDash([7, 5]);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+        ctx.restore();
+      }
+    };
+
+    function countPhrase(n, singular, plural) {
+      return n + " " + (n === 1 ? singular : plural);
+    }
+
+    function setError(message) {
+      errorEl.hidden = !message;
+      errorEl.textContent = message || "";
+    }
+
+    function render(rows) {
+      rows = (Array.isArray(rows) ? rows : [])
+        .filter((row) => row && typeof row.active_tables === "number" && typeof row.waitlist_players === "number")
+        .slice()
+        .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
+
+      const last = rows[rows.length - 1];
+      if (!last) {
+        headline.textContent = "No $3/$5/$10 NLH samples yet";
+        checked.textContent = "—";
+        checked.removeAttribute("datetime");
+        statActive.textContent = "–";
+        statWait.textContent = "–";
+        started.textContent = "History starts after the first sample.";
+        empty.hidden = false;
+        empty.textContent = "No samples yet. Run python3 update.py, then reload.";
+        chartWrap.hidden = true;
+        if (chart) {
+          chart.destroy();
+          chart = null;
+        }
+        return;
+      }
+
+      empty.hidden = true;
+      chartWrap.hidden = false;
+      headline.textContent =
+        countPhrase(last.active_tables, "active $3/$5/$10 NLH table", "active $3/$5/$10 NLH tables")
+        + " · "
+        + countPhrase(last.waitlist_players, "player waiting", "players waiting");
+      checked.textContent = last.ts_label;
+      checked.setAttribute("datetime", last.ts);
+      statActive.textContent = String(last.active_tables);
+      statWait.textContent = String(last.waitlist_players);
+      const first = rows[0];
+      started.textContent = "History starts " + first.ts_label + " PT · "
+        + countPhrase(rows.length, "sample", "samples") + ".";
+
+      const labels = rows.map((row) => row.ts_label);
+      const peak = rows.reduce((max, row) => Math.max(max, row.active_tables, row.waitlist_players), THRESHOLD);
+      const dots = rows.length > 48 ? 0 : 3;
+
+      if (chart) chart.destroy();
+      chart = new Chart(canvas, {
+        type: "line",
+        plugins: [thresholdLine],
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Active tables",
+              data: rows.map((row) => row.active_tables),
+              borderColor: BLUE,
+              backgroundColor: BLUE,
+              borderWidth: 2,
+              pointRadius: dots,
+              pointHoverRadius: 4,
+              tension: 0
+            },
+            {
+              label: "Waitlist players",
+              data: rows.map((row) => row.waitlist_players),
+              borderColor: GREEN,
+              backgroundColor: GREEN,
+              borderWidth: 2,
+              pointRadius: dots,
+              pointHoverRadius: 4,
+              tension: 0
+            },
+            {
+              label: "4-active-table threshold",
+              data: rows.map(() => THRESHOLD),
+              borderColor: YELLOW,
+              backgroundColor: YELLOW,
+              borderDash: [7, 5],
+              borderWidth: 1.5,
+              pointStyle: "line",
+              pointRadius: 0,
+              pointHoverRadius: 0,
+              showLine: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: {
+              labels: { boxWidth: 28, color: "#e7f0ea" }
+            },
+            tooltip: {
+              filter: (item) => item.datasetIndex !== 2
+            }
+          },
+          scales: {
+            x: {
+              ticks: { maxTicksLimit: 8, maxRotation: 0, color: "#93a79b" },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              suggestedMax: peak + 1,
+              ticks: { precision: 0, color: "#93a79b" },
+              grid: { color: "rgba(255,255,255,0.06)" }
+            }
+          }
+        }
+      });
+    }
+
+    async function load() {
+      try {
+        const res = await fetch("data/history.json?t=" + Date.now());
+        if (!res.ok) throw new Error("Could not load history (" + res.status + ")");
+        const rows = await res.json();
+        rowsCache = rows;
+        render(rows);
+        setError("");
+      } catch (err) {
+        setError(err && err.message ? err.message : "Could not load history");
+        if (!rowsCache) render([]);
+      }
+    }
+
+    load();
+    setInterval(load, RELOAD_MS);
+  </script>
+</body>
+</html>
