@@ -29,7 +29,7 @@ python3 -m http.server 8765
 
 Open [http://127.0.0.1:8765/](http://127.0.0.1:8765/) on the same computer that is running the server.
 
-`update.py` fetches `https://pokerwa.com/fortunepoker/index.php`, counts `$3/$5/$10` NLH tables and the waitlist from icon filenames, appends one sample, and drops samples older than 90 days.
+`update.py` fetches `https://pokerwa.com/fortunepoker/index.php`, counts `$3/$5/$10` NLH tables and the waitlist from icon filenames, appends one sample, and drops samples older than 60 days.
 
 Offline / fixture mode:
 
@@ -70,7 +70,8 @@ Counts come from image filenames. An active table is an `img.PokerTable` whose `
 
 | Location | Setting |
 | --- | --- |
-| `update.py` → `RETENTION_DAYS` | 90 |
+| `update.py` → `RETENTION_DAYS` | 60 |
+| `index.html` → `HISTORY_DAYS` | Chart shows the latest 60 days |
 | `update.py` → `UA` | User-Agent |
 | `index.html` → `THRESHOLD` | Dashed line at 4 |
 | `index.html` → `RELOAD_MS` | Client refetch, 10 minutes |

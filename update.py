@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 
 BOARD_URL = "https://pokerwa.com/fortunepoker/index.php"
 UA = "FortunePokerMonitor/1.0 (personal; polite ~10min; not affiliated)"
-RETENTION_DAYS = 90
+RETENTION_DAYS = 60
 PACIFIC = ZoneInfo("America/Los_Angeles")
 
 ROOT = Path(__file__).resolve().parent
@@ -188,8 +188,14 @@ def _self_check() -> None:
     assert format_label(datetime(2026, 10, 13, 0, 5, tzinfo=PACIFIC)) == "Oct 13 12:05am"
 
     old = {
-        "ts": (moment - timedelta(days=91)).isoformat(),
+        "ts": (moment - timedelta(days=RETENTION_DAYS + 1)).isoformat(),
         "ts_label": "old",
+        "active_tables": 1,
+        "waitlist_players": 0,
+    }
+    edge = {
+        "ts": (moment - timedelta(days=RETENTION_DAYS)).isoformat(),
+        "ts_label": "edge",
         "active_tables": 1,
         "waitlist_players": 0,
     }
@@ -199,7 +205,7 @@ def _self_check() -> None:
         "active_tables": 2,
         "waitlist_players": 1,
     }
-    assert prune([fresh, old], moment) == [fresh]
+    assert prune([fresh, old, edge], moment) == [edge, fresh]
 
 
 def main(argv: list[str]) -> int:

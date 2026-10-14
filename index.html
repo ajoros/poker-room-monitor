@@ -94,7 +94,7 @@
     </header>
     <section class="panel">
       <h2>Fortune Poker — active tables and waitlist</h2>
-      <p class="sub">Rolling 90 days. This page reloads the history file about every 10 minutes.</p>
+      <p class="sub">Latest 60 days. This page reloads the history file about every 10 minutes.</p>
       <div class="stats">
         <div class="stat" style="--accent: var(--blue)"><b id="stat-active">–</b><span>Active tables</span></div>
         <div class="stat" style="--accent: var(--green)"><b id="stat-wait">–</b><span>Waitlist players</span></div>
@@ -111,6 +111,7 @@
   </div>
   <script>
     const THRESHOLD = 4;
+    const HISTORY_DAYS = 60;
     const RELOAD_MS = 10 * 60 * 1000;
     const BLUE = "#6eb6ff";
     const GREEN = "#3dce86";
@@ -159,8 +160,9 @@
     }
 
     function render(rows) {
+      const cutoff = Date.now() - HISTORY_DAYS * 24 * 60 * 60 * 1000;
       rows = (Array.isArray(rows) ? rows : [])
-        .filter((row) => row && typeof row.active_tables === "number" && typeof row.waitlist_players === "number")
+        .filter((row) => row && typeof row.active_tables === "number" && typeof row.waitlist_players === "number" && Date.parse(row.ts) >= cutoff)
         .slice()
         .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
 
