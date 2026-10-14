@@ -7,100 +7,173 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #101614;
-      --panel: #18211c;
-      --text: #e7f0ea;
-      --muted: #93a79b;
-      --line: #2c3b33;
-      --blue: #6eb6ff;
-      --green: #3dce86;
-      --yellow: #e6c14a;
-      --danger: #ffb4b4;
+      --ink: #143018;
+      --cream: #fff6df;
+      --muted: rgba(255, 246, 223, 0.78);
+      --blue: #8ec8ff;
+      --green: #d6ff6a;
+      --yellow: #ffe14a;
+      --danger: #ffd0d0;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      color: var(--text);
-      background:
-        radial-gradient(1200px 500px at 10% -10%, #1c3328 0%, transparent 55%),
-        var(--bg);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.4;
+      color: var(--cream);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.35;
+      background-color: #c9b498;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 4px),
+        repeating-linear-gradient(90deg, rgba(90,55,20,.06) 0 1px, transparent 1px 5px),
+        linear-gradient(165deg, #ead8bc 0%, #c4ad8e 42%, #b49676 72%, #d8c4a6 100%);
     }
-    .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; }
-    .brand {
-      margin: 0 0 8px;
-      color: var(--muted);
+    .room { min-height: 100vh; padding: 36px 16px 48px; }
+    .table { max-width: 1180px; margin: 0 auto; position: relative; }
+    .rail {
+      background: linear-gradient(180deg, #e39a62 0%, #a85b30 16%, #6d3418 48%, #8a4622 78%, #3f1e0e 100%);
+      border-radius: 50%;
+      padding: 26px 28px;
+      box-shadow:
+        0 26px 40px rgba(55, 28, 8, 0.45),
+        inset 0 3px 0 rgba(255, 226, 180, 0.55),
+        inset 0 -10px 16px rgba(0, 0, 0, 0.35);
+    }
+    .felt {
+      position: relative;
+      border-radius: 50%;
+      padding: 54px 7% 36px;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(255,255,255,.16), transparent 46%),
+        radial-gradient(ellipse at 50% 48%, #4ec63c 0%, #2f9d2c 46%, #1c7a22 100%);
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.28), inset 0 0 0 8px rgba(10, 60, 16, 0.18);
+      text-align: center;
+    }
+    .tray {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px 6px;
+      background: linear-gradient(#9a6236, #5a3016 55%, #3d2010);
+      border: 2px solid #2a140c;
+      border-radius: 5px 5px 3px 3px;
+      box-shadow: inset 0 12px 8px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(0, 0, 0, 0.25);
+    }
+    .chip {
+      display: inline-block;
+      width: 16px;
+      height: 30px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #16357a 0 3px, #f7f9ff 3px 6px, #2d5fe0 6px 10px, #f7f9ff 10px 13px, #16357a 13px);
+      box-shadow: 0 1px 0 #111;
+    }
+    .chip.red {
+      background: linear-gradient(90deg, #8e1212 0 3px, #fff 3px 6px, #d32f2f 6px 10px, #fff 10px 13px, #8e1212 13px);
+    }
+    .plaque {
+      display: inline-block;
+      margin: 8px 0 10px;
+      padding: 4px 14px 5px;
+      background: #f7f3e8;
+      color: #1a1a1a;
+      border: 2px solid #1a1a1a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       font-size: 0.78rem;
-      letter-spacing: 0.14em;
+      font-weight: 700;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
     }
     .game-line {
       margin: 0;
-      font-size: clamp(1.15rem, 2.2vw, 1.55rem);
-      font-weight: 650;
+      font-size: clamp(1.05rem, 2vw, 1.4rem);
+      font-weight: 700;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     }
-    .game-line + .game-line { margin-top: 4px; }
-    .checked { margin: 10px 0 0; color: var(--muted); }
-    a { color: var(--blue); }
+    .game-line + .game-line { margin-top: 2px; }
+    .checked {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.92rem;
+    }
+    a { color: var(--yellow); }
     .games {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
-      margin-top: 22px;
+      margin-top: 16px;
+      text-align: left;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     .panel {
-      padding: 18px 18px 12px;
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      padding: 14px 14px 8px;
+      background: rgba(4, 42, 14, 0.42);
+      border: 1px solid rgba(255, 246, 223, 0.22);
+      border-radius: 18px;
+      box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.18);
     }
-    h2 { margin: 0 0 12px; font-size: 1.05rem; font-weight: 620; }
-    .sub { margin: -6px 0 12px; color: var(--muted); font-size: 0.85rem; }
+    h2 { margin: 0 0 8px; font-size: 1.02rem; font-weight: 700; color: var(--cream); }
+    .sub { margin: -4px 0 10px; color: var(--muted); font-size: 0.8rem; }
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 10px;
     }
     .stat {
-      padding: 10px 12px 12px;
-      background: #121a16;
-      border: 1px solid var(--line);
-      border-top: 3px solid var(--accent, var(--line));
+      padding: 8px 10px 10px;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 3px solid var(--accent, rgba(255,255,255,.3));
       border-radius: 10px;
     }
     .stat b {
       display: block;
-      font-size: 1.45rem;
+      font-size: 1.35rem;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.03em;
     }
-    .stat span { color: var(--muted); font-size: 0.78rem; }
-    .chart-wrap { position: relative; height: 320px; }
+    .stat span { color: var(--muted); font-size: 0.75rem; }
+    .chart-wrap { position: relative; height: 280px; }
     .empty, #error { margin: 8px 0 12px; }
     .empty { color: var(--muted); }
-    #error { color: var(--danger); }
-    footer { margin-top: 14px; color: var(--muted); font-size: 0.85rem; }
-    footer p { margin: 4px 0; }
-    @media (max-width: 860px) {
+    #error { color: var(--danger); text-align: center; }
+    footer {
+      margin-top: 12px;
+      color: rgba(255, 246, 223, 0.8);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 0.8rem;
+    }
+    footer p { margin: 3px 0; }
+    @media (max-width: 900px) {
+      .rail, .felt { border-radius: 42px; }
+      .felt { padding: 64px 16px 24px; }
       .games, .stats { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <p class="brand">Fortune Poker</p>
-      <div id="headline" aria-live="polite">
-        <p class="game-line" id="line-13">Loading…</p>
-        <p class="game-line" id="line-3510"></p>
-      </div>
-      <p class="checked">Checked <time id="checked">…</time> PT · <a href="https://fortunepokerroom.com/" target="_blank" rel="noopener noreferrer">fortunepokerroom.com</a></p>
-    </header>
-    <div class="games">
+  <div class="room">
+    <div class="table">
+      <div class="rail">
+        <div class="felt">
+          <div class="tray" aria-hidden="true">
+            <i class="chip"></i><i class="chip"></i><i class="chip red"></i><i class="chip"></i><i class="chip"></i><i class="chip red"></i><i class="chip"></i>
+          </div>
+          <header>
+            <p class="plaque">Fortune Poker</p>
+            <div id="headline" aria-live="polite">
+              <p class="game-line" id="line-13">Loading…</p>
+              <p class="game-line" id="line-3510"></p>
+            </div>
+            <p class="checked">Checked <time id="checked">…</time> PT · <a href="https://fortunepokerroom.com/" target="_blank" rel="noopener noreferrer">fortunepokerroom.com</a></p>
+          </header>
+          <div class="games">
       <section class="panel">
         <h2>$1/$3 NLH</h2>
         <p class="sub">Latest 60 days.</p>
@@ -123,20 +196,23 @@
         <div class="chart-wrap" id="wrap-3510"><canvas id="chart-3510" aria-label="$3/$5/$10 active tables and waitlist"></canvas></div>
         <p class="empty" id="empty-3510" hidden></p>
       </section>
+          </div>
+          <p id="error" role="alert" hidden></p>
+          <footer>
+            <p id="started"></p>
+            <p>Personal monitor. Not affiliated with Fortune Poker. The yellow line is visual only.</p>
+          </footer>
+        </div>
+      </div>
     </div>
-    <p id="error" role="alert" hidden></p>
-    <footer>
-      <p id="started"></p>
-      <p>Personal monitor. Not affiliated with Fortune Poker. The yellow line is visual only.</p>
-    </footer>
   </div>
   <script>
     const THRESHOLD = 4;
     const HISTORY_DAYS = 60;
     const RELOAD_MS = 10 * 60 * 1000;
-    const BLUE = "#6eb6ff";
-    const GREEN = "#3dce86";
-    const YELLOW = "#e6c14a";
+    const BLUE = "#8ec8ff";
+    const GREEN = "#d6ff6a";
+    const YELLOW = "#ffe14a";
     const GAMES = [
       { stake: "$1/$3 NLH", active: "active_tables_1_3", wait: "waitlist_players_1_3", line: "line-13", statActive: "stat-active-13", statWait: "stat-wait-13", wrap: "wrap-13", empty: "empty-13", canvas: "chart-13" },
       { stake: "$3/$5/$10 NLH", active: "active_tables", wait: "waitlist_players", line: "line-3510", statActive: "stat-active-3510", statWait: "stat-wait-3510", wrap: "wrap-3510", empty: "empty-3510", canvas: "chart-3510" }
@@ -255,19 +331,19 @@
           animation: false,
           interaction: { mode: "index", intersect: false },
           plugins: {
-            legend: { labels: { boxWidth: 28, color: "#e7f0ea" } },
+            legend: { labels: { boxWidth: 28, color: "#fff6df" } },
             tooltip: { filter: (item) => item.datasetIndex !== 2 }
           },
           scales: {
             x: {
-              ticks: { maxTicksLimit: 6, maxRotation: 0, color: "#93a79b" },
+              ticks: { maxTicksLimit: 6, maxRotation: 0, color: "#d7ecd4" },
               grid: { display: false }
             },
             y: {
               beginAtZero: true,
               suggestedMax: peak + 1,
-              ticks: { precision: 0, color: "#93a79b" },
-              grid: { color: "rgba(255,255,255,0.06)" }
+              ticks: { precision: 0, color: "#d7ecd4" },
+              grid: { color: "rgba(255,255,255,0.14)" }
             }
           }
         }
