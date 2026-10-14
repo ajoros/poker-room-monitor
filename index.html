@@ -7,239 +7,138 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --ink: #143018;
-      --cream: #fff6df;
-      --muted: rgba(255, 246, 223, 0.78);
-      --blue: #8ec8ff;
-      --green: #d6ff6a;
-      --yellow: #ffe14a;
-      --danger: #ffd0d0;
+      --bg: #0f1115;
+      --card: #181b22;
+      --line: #2a2e38;
+      --text: #e7e9ee;
+      --muted: #9aa3b2;
+      --blue: #8eb7ff;
+      --green: #b6e37a;
     }
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
-      color: var(--cream);
-      font-family: Georgia, "Times New Roman", serif;
-      line-height: 1.35;
-      background-color: #c9b498;
-      background-image:
-        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 4px),
-        repeating-linear-gradient(90deg, rgba(90,55,20,.06) 0 1px, transparent 1px 5px),
-        linear-gradient(165deg, #ead8bc 0%, #c4ad8e 42%, #b49676 72%, #d8c4a6 100%);
+      background: var(--bg);
+      color: var(--text);
+      font: 13px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-    .room { min-height: 100vh; padding: 36px 16px 48px; }
-    .table { max-width: 1180px; margin: 0 auto; position: relative; }
-    .rail {
-      background: linear-gradient(180deg, #e39a62 0%, #a85b30 16%, #6d3418 48%, #8a4622 78%, #3f1e0e 100%);
-      border-radius: 50%;
-      padding: 26px 28px;
-      box-shadow:
-        0 26px 40px rgba(55, 28, 8, 0.45),
-        inset 0 3px 0 rgba(255, 226, 180, 0.55),
-        inset 0 -10px 16px rgba(0, 0, 0, 0.35);
-    }
-    .felt {
-      position: relative;
-      border-radius: 50%;
-      padding: 54px 7% 36px;
-      background:
-        radial-gradient(ellipse at 50% 42%, rgba(255,255,255,.16), transparent 46%),
-        radial-gradient(ellipse at 50% 48%, #4ec63c 0%, #2f9d2c 46%, #1c7a22 100%);
-      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.28), inset 0 0 0 8px rgba(10, 60, 16, 0.18);
-      text-align: center;
-    }
-    .tray {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2;
+    main {
+      height: 100vh;
       display: flex;
-      gap: 6px;
+      flex-direction: column;
       padding: 8px 12px 6px;
-      background: linear-gradient(#9a6236, #5a3016 55%, #3d2010);
-      border: 2px solid #2a140c;
-      border-radius: 5px 5px 3px 3px;
-      box-shadow: inset 0 12px 8px rgba(0, 0, 0, 0.35), 0 2px 0 rgba(0, 0, 0, 0.25);
+      gap: 6px;
     }
-    .chip {
-      display: inline-block;
-      width: 16px;
-      height: 30px;
-      border-radius: 3px;
-      background: linear-gradient(90deg, #16357a 0 3px, #f7f9ff 3px 6px, #2d5fe0 6px 10px, #f7f9ff 10px 13px, #16357a 13px);
-      box-shadow: 0 1px 0 #111;
+    header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+    h1 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+    .now { margin: 0; font-variant-numeric: tabular-nums; }
+    .checked, .empty { color: var(--muted); }
+    .checked { margin: 0; font-size: 0.75rem; }
+    .key { display: inline-flex; gap: 10px; color: var(--muted); font-size: 0.75rem; }
+    .key i { display: inline-block; width: 10px; height: 3px; margin-right: 4px; vertical-align: middle; }
+    a { color: var(--blue); }
+    #error { color: #ffb4b4; margin: 0; }
+    .views { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; }
+    section { min-height: 0; display: grid; grid-template-columns: 92px 1fr; gap: 8px; }
+    h2 { margin: 0; font-size: 0.78rem; font-weight: 600; }
+    .tag { display: block; color: var(--blue); font-size: 0.68rem; font-weight: 500; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-height: 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 4px 6px 2px;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
     }
-    .chip.red {
-      background: linear-gradient(90deg, #8e1212 0 3px, #fff 3px 6px, #d32f2f 6px 10px, #fff 10px 13px, #8e1212 13px);
-    }
-    .plaque {
-      display: inline-block;
-      margin: 8px 0 10px;
-      padding: 4px 14px 5px;
-      background: #f7f3e8;
-      color: #1a1a1a;
-      border: 2px solid #1a1a1a;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-    }
-    .game-line {
-      margin: 0;
-      font-size: clamp(1.05rem, 2vw, 1.4rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
-    }
-    .game-line + .game-line { margin-top: 2px; }
-    .checked {
-      margin: 8px 0 0;
-      color: var(--muted);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 0.92rem;
-    }
-    a { color: var(--yellow); }
-    .games {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-top: 16px;
-      text-align: left;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    .panel {
-      padding: 14px 14px 8px;
-      background: rgba(4, 42, 14, 0.42);
-      border: 1px solid rgba(255, 246, 223, 0.22);
-      border-radius: 18px;
-      box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.18);
-    }
-    h2 { margin: 0 0 8px; font-size: 1.02rem; font-weight: 700; color: var(--cream); }
-    .sub { margin: -4px 0 10px; color: var(--muted); font-size: 0.8rem; }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .stat {
-      padding: 8px 10px 10px;
-      background: rgba(0, 0, 0, 0.22);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-top: 3px solid var(--accent, rgba(255,255,255,.3));
-      border-radius: 10px;
-    }
-    .stat b {
-      display: block;
-      font-size: 1.35rem;
-      font-variant-numeric: tabular-nums;
-      letter-spacing: -0.03em;
-    }
-    .stat span { color: var(--muted); font-size: 0.75rem; }
-    .chart-wrap { position: relative; height: 280px; }
-    .empty, #error { margin: 8px 0 12px; }
-    .empty { color: var(--muted); }
-    #error { color: var(--danger); text-align: center; }
-    footer {
-      margin-top: 12px;
-      color: rgba(255, 246, 223, 0.8);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 0.8rem;
-    }
-    footer p { margin: 3px 0; }
-    @media (max-width: 900px) {
-      .rail, .felt { border-radius: 42px; }
-      .felt { padding: 64px 16px 24px; }
-      .games, .stats { grid-template-columns: 1fr; }
+    h3 { margin: 0; font-size: 0.72rem; font-weight: 600; color: #c5cad3; }
+    .chart { position: relative; flex: 1; min-height: 0; }
+    .empty { margin: 4px 0; font-size: 0.75rem; }
+    @media (max-width: 800px) {
+      html, body, main { height: auto; }
+      .views { display: block; }
+      section { display: block; margin-top: 14px; }
+      .pair { grid-template-columns: 1fr; }
+      .chart { height: 180px; }
     }
   </style>
 </head>
 <body>
-  <div class="room">
-    <div class="table">
-      <div class="rail">
-        <div class="felt">
-          <div class="tray" aria-hidden="true">
-            <i class="chip"></i><i class="chip"></i><i class="chip red"></i><i class="chip"></i><i class="chip"></i><i class="chip red"></i><i class="chip"></i>
-          </div>
-          <header>
-            <p class="plaque">Fortune Poker</p>
-            <div id="headline" aria-live="polite">
-              <p class="game-line" id="line-13">Loading…</p>
-              <p class="game-line" id="line-3510"></p>
-            </div>
-            <p class="checked">Checked <time id="checked">…</time> PT · <a href="https://fortunepokerroom.com/" target="_blank" rel="noopener noreferrer">fortunepokerroom.com</a></p>
-          </header>
-          <div class="games">
-      <section class="panel">
-        <h2>$1/$3 NLH</h2>
-        <p class="sub">Latest 30 days.</p>
-        <div class="stats">
-          <div class="stat" style="--accent: var(--blue)"><b id="stat-active-13">–</b><span>Active tables</span></div>
-          <div class="stat" style="--accent: var(--green)"><b id="stat-wait-13">–</b><span>Waitlist players</span></div>
-          <div class="stat" style="--accent: var(--yellow)"><b>4</b><span>4-active-table threshold</span></div>
-        </div>
-        <div class="chart-wrap" id="wrap-13"><canvas id="chart-13" aria-label="$1/$3 active tables and waitlist"></canvas></div>
-        <p class="empty" id="empty-13" hidden></p>
+  <main>
+    <header>
+      <h1>Fortune Poker</h1>
+      <p class="now" id="line-13">Loading…</p>
+      <p class="now" id="line-3510"></p>
+      <p class="key"><span><i style="background:#8eb7ff"></i>tables</span><span><i style="background:#b6e37a"></i>waitlist</span></p>
+      <p class="checked"><time id="checked">…</time> PT · <span id="started"></span> · <a href="https://fortunepokerroom.com/" target="_blank" rel="noopener noreferrer">fortunepokerroom.com</a></p>
+    </header>
+    <p id="error" role="alert" hidden></p>
+    <div class="views">
+      <section>
+        <h2>Two axes<span class="tag">use this</span></h2>
+        <div class="pair" id="pair-axes"></div>
       </section>
-      <section class="panel">
-        <h2>$3/$5/$10 NLH</h2>
-        <p class="sub">Latest 30 days.</p>
-        <div class="stats">
-          <div class="stat" style="--accent: var(--blue)"><b id="stat-active-3510">–</b><span>Active tables</span></div>
-          <div class="stat" style="--accent: var(--green)"><b id="stat-wait-3510">–</b><span>Waitlist players</span></div>
-          <div class="stat" style="--accent: var(--yellow)"><b>4</b><span>4-active-table threshold</span></div>
-        </div>
-        <div class="chart-wrap" id="wrap-3510"><canvas id="chart-3510" aria-label="$3/$5/$10 active tables and waitlist"></canvas></div>
-        <p class="empty" id="empty-3510" hidden></p>
+      <section>
+        <h2>Step and area</h2>
+        <div class="pair" id="pair-step"></div>
       </section>
-          </div>
-          <p id="error" role="alert" hidden></p>
-          <footer>
-            <p id="started"></p>
-            <p>Personal monitor. Not affiliated with Fortune Poker. The yellow line is visual only.</p>
-          </footer>
-        </div>
-      </div>
+      <section>
+        <h2>Per open table</h2>
+        <div class="pair" id="pair-ratio"></div>
+      </section>
+      <section>
+        <h2>By hour</h2>
+        <div class="pair" id="pair-hour"></div>
+      </section>
     </div>
-  </div>
+  </main>
   <script>
-    const THRESHOLD = 4;
     const HISTORY_DAYS = 30;
     const RELOAD_MS = 10 * 60 * 1000;
-    const BLUE = "#8ec8ff";
-    const GREEN = "#d6ff6a";
-    const YELLOW = "#ffe14a";
+    const BLUE = "#8eb7ff";
+    const GREEN = "#b6e37a";
+    const TICK = "#8b93a1";
+    const GRID = "rgba(255,255,255,0.06)";
+    const FILL = "rgba(182, 227, 122, 0.16)";
     const GAMES = [
-      { stake: "$1/$3 NLH", active: "active_tables_1_3", wait: "waitlist_players_1_3", line: "line-13", statActive: "stat-active-13", statWait: "stat-wait-13", wrap: "wrap-13", empty: "empty-13", canvas: "chart-13" },
-      { stake: "$3/$5/$10 NLH", active: "active_tables", wait: "waitlist_players", line: "line-3510", statActive: "stat-active-3510", statWait: "stat-wait-3510", wrap: "wrap-3510", empty: "empty-3510", canvas: "chart-3510" }
+      { id: "13", stake: "$1/$3", active: "active_tables_1_3", wait: "waitlist_players_1_3", line: "line-13" },
+      { id: "3510", stake: "$3/$5/$10", active: "active_tables", wait: "waitlist_players", line: "line-3510" }
     ];
+    const VIEWS = ["axes", "step", "ratio", "hour"];
 
     const checked = document.getElementById("checked");
     const started = document.getElementById("started");
     const errorEl = document.getElementById("error");
     const charts = {};
-    let rowsCache = null;
 
-    const thresholdLine = {
-      id: "thresholdLine",
-      afterDraw(chart) {
-        const yScale = chart.scales.y;
-        if (!yScale) return;
-        const y = yScale.getPixelForValue(THRESHOLD);
-        const { left, right } = chart.chartArea;
+    GAMES.forEach((game) => {
+      VIEWS.forEach((view) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = "<h3>" + game.stake + "</h3>"
+          + "<div class='chart' id='wrap-" + view + "-" + game.id + "'><canvas id='" + view + "-" + game.id + "'></canvas></div>"
+          + "<p class='empty' id='empty-" + view + "-" + game.id + "' hidden></p>";
+        document.getElementById("pair-" + view).appendChild(card);
+      });
+    });
+
+    const pointLabels = {
+      id: "pointLabels",
+      afterDatasetsDraw(chart) {
+        const labels = chart.data.datasets[0] && chart.data.datasets[0].pointLabels;
+        if (!labels) return;
+        const meta = chart.getDatasetMeta(0);
         const ctx = chart.ctx;
         ctx.save();
-        ctx.strokeStyle = YELLOW;
-        ctx.setLineDash([7, 5]);
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(left, y);
-        ctx.lineTo(right, y);
-        ctx.stroke();
+        ctx.fillStyle = "#c5cad3";
+        ctx.font = "11px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+        ctx.textAlign = "center";
+        meta.data.forEach((pt, i) => {
+          if (labels[i] == null || pt.skip) return;
+          ctx.fillText(labels[i] + " tbl", pt.x, pt.y - 8);
+        });
         ctx.restore();
       }
     };
@@ -253,107 +152,196 @@
       errorEl.textContent = message || "";
     }
 
-    function series(rows, key) {
-      return rows.map((row) => (typeof row[key] === "number" ? row[key] : null));
+    function num(row, key) {
+      return typeof row[key] === "number" ? row[key] : null;
     }
 
-    function draw(game, rows) {
-      const canvas = document.getElementById(game.canvas);
-      const wrap = document.getElementById(game.wrap);
-      const empty = document.getElementById(game.empty);
-      const active = series(rows, game.active);
-      const waiting = series(rows, game.wait);
-      const hasPoints = active.some((value) => value !== null);
-      if (charts[game.canvas]) {
-        charts[game.canvas].destroy();
-        charts[game.canvas] = null;
+    function rowsFor(rows, game) {
+      return rows.filter((row) => num(row, game.active) !== null);
+    }
+
+    function median(values) {
+      const sorted = values.slice().sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    function hourBuckets(rows, game) {
+      const buckets = new Map();
+      rowsFor(rows, game).forEach((row) => {
+        const date = new Date(row.ts);
+        const hour = Number(new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Los_Angeles", hour: "numeric", hourCycle: "h23"
+        }).format(date));
+        const label = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Los_Angeles", hour: "numeric"
+        }).format(date);
+        if (!buckets.has(hour)) buckets.set(hour, { label, tables: [], waiting: [] });
+        const bucket = buckets.get(hour);
+        bucket.tables.push(row[game.active]);
+        if (num(row, game.wait) !== null) bucket.waiting.push(row[game.wait]);
+      });
+      return [...buckets.entries()].sort((a, b) => a[0] - b[0]).map((entry) => entry[1]);
+    }
+
+    function axis(title, color, max, right) {
+      return {
+        beginAtZero: true,
+        position: right ? "right" : "left",
+        suggestedMax: (max || 0) + 1,
+        title: title ? { display: true, text: title, color: color || TICK, font: { size: 10 } } : undefined,
+        ticks: { precision: 0, color: TICK, font: { size: 10 } },
+        grid: right ? { drawOnChartArea: false } : { color: GRID }
+      };
+    }
+
+    function baseOptions(scales) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: { legend: { display: false } },
+        scales
+      };
+    }
+
+    function lineSet(label, data, color, width, extra) {
+      return Object.assign({
+        label,
+        data,
+        borderColor: color,
+        backgroundColor: color,
+        borderWidth: width,
+        pointRadius: data.length > 48 ? 0 : 3,
+        pointHoverRadius: 4,
+        tension: 0,
+        spanGaps: false
+      }, extra || {});
+    }
+
+    function mount(id, config) {
+      const canvas = document.getElementById(id);
+      const wrap = document.getElementById("wrap-" + id);
+      const empty = document.getElementById("empty-" + id);
+      if (charts[id]) {
+        charts[id].destroy();
+        charts[id] = null;
       }
-      if (!hasPoints) {
+      if (!config) {
         wrap.hidden = true;
         empty.hidden = false;
-        empty.textContent = "No " + game.stake + " samples yet.";
+        empty.textContent = "No samples yet.";
         return;
       }
       empty.hidden = true;
       wrap.hidden = false;
-      const labels = rows.map((row) => row.ts_label);
-      const peak = rows.reduce((max, row) => {
-        const tables = row[game.active];
-        const list = row[game.wait];
-        return Math.max(max, typeof tables === "number" ? tables : 0, typeof list === "number" ? list : 0);
-      }, THRESHOLD);
-      const dots = rows.length > 48 ? 0 : 3;
-      charts[game.canvas] = new Chart(canvas, {
+      charts[id] = new Chart(canvas, config);
+    }
+
+    function drawAxes(game, rows) {
+      const mine = rowsFor(rows, game);
+      const id = "axes-" + game.id;
+      if (!mine.length) return mount(id, null);
+      const tables = mine.map((row) => row[game.active]);
+      const waiting = mine.map((row) => num(row, game.wait));
+      mount(id, {
         type: "line",
-        plugins: [thresholdLine],
         data: {
-          labels,
+          labels: mine.map((row) => row.ts_label),
           datasets: [
-            {
-              label: "Active tables",
-              data: active,
-              borderColor: BLUE,
-              backgroundColor: BLUE,
-              borderWidth: 2,
-              pointRadius: dots,
-              pointHoverRadius: 4,
-              tension: 0,
-              spanGaps: false
-            },
-            {
-              label: "Waitlist players",
-              data: waiting,
-              borderColor: GREEN,
-              backgroundColor: GREEN,
-              borderWidth: 2,
-              pointRadius: dots,
-              pointHoverRadius: 4,
-              tension: 0,
-              spanGaps: false
-            },
-            {
-              label: "4-active-table threshold",
-              data: rows.map(() => THRESHOLD),
-              borderColor: YELLOW,
-              backgroundColor: YELLOW,
-              borderDash: [7, 5],
-              borderWidth: 1.5,
-              pointStyle: "line",
-              pointRadius: 0,
-              pointHoverRadius: 0,
-              showLine: false
-            }
+            lineSet("Active tables", tables, BLUE, 3, { stepped: true, yAxisID: "y" }),
+            lineSet("Waitlist", waiting, GREEN, 2, { yAxisID: "y1" })
           ]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: false,
-          interaction: { mode: "index", intersect: false },
-          plugins: {
-            legend: { labels: { boxWidth: 28, color: "#fff6df" } },
-            tooltip: { filter: (item) => item.datasetIndex !== 2 }
-          },
-          scales: {
-            x: {
-              ticks: { maxTicksLimit: 6, maxRotation: 0, color: "#d7ecd4" },
-              grid: { display: false }
-            },
-            y: {
-              beginAtZero: true,
-              suggestedMax: peak + 1,
-              ticks: { precision: 0, color: "#d7ecd4" },
-              grid: { color: "rgba(255,255,255,0.14)" }
-            }
-          }
-        }
+        options: baseOptions({
+          x: { ticks: { maxTicksLimit: 5, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
+          y: axis("Tables", BLUE, Math.max(...tables)),
+          y1: axis("Waitlist", GREEN, Math.max(0, ...waiting.filter((v) => v !== null)), true)
+        })
       });
+    }
+
+    function drawStep(game, rows) {
+      const mine = rowsFor(rows, game);
+      const id = "step-" + game.id;
+      if (!mine.length) return mount(id, null);
+      const tables = mine.map((row) => row[game.active]);
+      const waiting = mine.map((row) => num(row, game.wait));
+      const peak = Math.max(0, ...tables, ...waiting.filter((v) => v !== null));
+      mount(id, {
+        type: "line",
+        data: {
+          labels: mine.map((row) => row.ts_label),
+          datasets: [
+            lineSet("Active tables", tables, BLUE, 3, { stepped: true }),
+            lineSet("Waitlist", waiting, GREEN, 2, { backgroundColor: FILL, fill: true })
+          ]
+        },
+        options: baseOptions({
+          x: { ticks: { maxTicksLimit: 5, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
+          y: axis("", TICK, peak)
+        })
+      });
+    }
+
+    function drawRatio(game, rows) {
+      const mine = rowsFor(rows, game).filter((row) => row[game.active] > 0 && num(row, game.wait) !== null);
+      const id = "ratio-" + game.id;
+      if (!mine.length) return mount(id, null);
+      const ratios = mine.map((row) => Math.round((row[game.wait] / row[game.active]) * 10) / 10);
+      mount(id, {
+        type: "line",
+        plugins: [pointLabels],
+        data: {
+          labels: mine.map((row) => row.ts_label),
+          datasets: [
+            lineSet("Players per table", ratios, BLUE, 3, {
+              pointLabels: mine.map((row) => row[game.active])
+            })
+          ]
+        },
+        options: baseOptions({
+          x: { ticks: { maxTicksLimit: 5, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
+          y: Object.assign(axis("", TICK, Math.max(...ratios)), { ticks: { color: TICK, precision: 1 } })
+        })
+      });
+    }
+
+    function drawHour(game, rows) {
+      const buckets = hourBuckets(rows, game);
+      const id = "hour-" + game.id;
+      if (!buckets.length) return mount(id, null);
+      const tables = buckets.map((bucket) => median(bucket.tables));
+      const waiting = buckets.map((bucket) => bucket.waiting.length ? median(bucket.waiting) : null);
+      const peak = Math.max(0, ...tables, ...waiting.filter((v) => v !== null));
+      mount(id, {
+        type: "bar",
+        data: {
+          labels: buckets.map((bucket) => bucket.label),
+          datasets: [
+            { label: "Median tables", data: tables, backgroundColor: BLUE },
+            { label: "Median waitlist", data: waiting, backgroundColor: GREEN }
+          ]
+        },
+        options: baseOptions({
+          x: { ticks: { color: TICK, font: { size: 10 } }, grid: { display: false } },
+          y: axis("", TICK, peak)
+        })
+      });
+    }
+
+    function drawGame(game, rows) {
+      drawAxes(game, rows);
+      drawStep(game, rows);
+      drawRatio(game, rows);
+      drawHour(game, rows);
     }
 
     function render(rows) {
       const cutoff = Date.now() - HISTORY_DAYS * 24 * 60 * 60 * 1000;
       rows = (Array.isArray(rows) ? rows : [])
-        .filter((row) => row && Date.parse(row.ts) >= cutoff && (typeof row.active_tables === "number" || typeof row.active_tables_1_3 === "number"))
+        .filter((row) => row && Date.parse(row.ts) >= cutoff && (num(row, "active_tables") !== null || num(row, "active_tables_1_3") !== null))
         .slice()
         .sort((a, b) => (a.ts < b.ts ? -1 : a.ts > b.ts ? 1 : 0));
 
@@ -364,33 +352,24 @@
         started.textContent = "History starts after the first sample.";
         GAMES.forEach((game) => {
           document.getElementById(game.line).textContent = "No " + game.stake + " samples yet";
-          document.getElementById(game.statActive).textContent = "–";
-          document.getElementById(game.statWait).textContent = "–";
-          draw(game, []);
+          drawGame(game, []);
         });
         return;
       }
 
       checked.textContent = last.ts_label;
       checked.setAttribute("datetime", last.ts);
-      started.textContent = "History starts " + rows[0].ts_label + " PT · "
-        + countPhrase(rows.length, "sample", "samples") + ".";
+      started.textContent = countPhrase(rows.length, "sample", "samples");
       GAMES.forEach((game) => {
-        const tables = last[game.active];
-        const waiting = last[game.wait];
+        const tables = num(last, game.active);
+        const waiting = num(last, game.wait);
         const line = document.getElementById(game.line);
-        if (typeof tables !== "number") {
+        if (tables === null) {
           line.textContent = "No " + game.stake + " samples yet";
-          document.getElementById(game.statActive).textContent = "–";
-          document.getElementById(game.statWait).textContent = "–";
         } else {
-          line.textContent = countPhrase(tables, "active " + game.stake + " table", "active " + game.stake + " tables")
-            + " · "
-            + countPhrase(waiting, "player waiting", "players waiting");
-          document.getElementById(game.statActive).textContent = String(tables);
-          document.getElementById(game.statWait).textContent = String(waiting);
+          line.textContent = game.stake + " " + tables + " tables · " + waiting + " waiting";
         }
-        draw(game, rows);
+        drawGame(game, rows);
       });
     }
 
@@ -398,13 +377,10 @@
       try {
         const res = await fetch("data/history.json?t=" + Date.now());
         if (!res.ok) throw new Error("Could not load history (" + res.status + ")");
-        const rows = await res.json();
-        rowsCache = rows;
-        render(rows);
+        render(await res.json());
         setError("");
       } catch (err) {
         setError(err && err.message ? err.message : "Could not load history");
-        if (!rowsCache) render([]);
       }
     }
 
