@@ -39,24 +39,24 @@
     .key i { display: inline-block; width: 10px; height: 3px; margin-right: 4px; vertical-align: middle; }
     a { color: var(--blue); }
     #error { color: #ffb4b4; margin: 0; }
-    .views { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(4, 1fr); gap: 6px; }
+    .views { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 6px; }
     section { min-height: 0; display: grid; grid-template-columns: 92px 1fr; gap: 8px; }
     h2 { margin: 0; font-size: 0.78rem; font-weight: 600; }
-    .tag { display: block; color: var(--blue); font-size: 0.68rem; font-weight: 500; }
-    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-height: 0; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-height: 0; height: 100%; }
     .card {
       background: var(--card);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 4px 6px 2px;
       min-height: 0;
+      height: 100%;
       display: flex;
       flex-direction: column;
     }
     h3 { margin: 0; font-size: 0.72rem; font-weight: 600; color: #c5cad3; }
-    .chart { position: relative; flex: 1; min-height: 0; }
+    .chart { position: relative; flex: 1; min-height: 0; height: 100%; }
     .empty { margin: 4px 0; font-size: 0.75rem; }
-    @media (max-width: 800px) {
+    @media (max-width: 640px) {
       html, body, main { height: auto; }
       .views { display: block; }
       section { display: block; margin-top: 14px; }
@@ -76,10 +76,6 @@
     </header>
     <p id="error" role="alert" hidden></p>
     <div class="views">
-      <section>
-        <h2>Two axes<span class="tag">use this</span></h2>
-        <div class="pair" id="pair-axes"></div>
-      </section>
       <section>
         <h2>Step and area</h2>
         <div class="pair" id="pair-step"></div>
@@ -106,7 +102,7 @@
       { id: "13", stake: "$1/$3", active: "active_tables_1_3", wait: "waitlist_players_1_3", line: "line-13" },
       { id: "3510", stake: "$3/$5/$10", active: "active_tables", wait: "waitlist_players", line: "line-3510" }
     ];
-    const VIEWS = ["axes", "step", "ratio", "hour"];
+    const VIEWS = ["step", "ratio", "hour"];
 
     const checked = document.getElementById("checked");
     const started = document.getElementById("started");
@@ -239,29 +235,6 @@
       charts[id] = new Chart(canvas, config);
     }
 
-    function drawAxes(game, rows) {
-      const mine = rowsFor(rows, game);
-      const id = "axes-" + game.id;
-      if (!mine.length) return mount(id, null);
-      const tables = mine.map((row) => row[game.active]);
-      const waiting = mine.map((row) => num(row, game.wait));
-      mount(id, {
-        type: "line",
-        data: {
-          labels: mine.map((row) => row.ts_label),
-          datasets: [
-            lineSet("Active tables", tables, BLUE, 3, { stepped: true, yAxisID: "y" }),
-            lineSet("Waitlist", waiting, GREEN, 2, { yAxisID: "y1" })
-          ]
-        },
-        options: baseOptions({
-          x: { ticks: { maxTicksLimit: 5, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
-          y: axis("Tables", BLUE, Math.max(...tables)),
-          y1: axis("Waitlist", GREEN, Math.max(0, ...waiting.filter((v) => v !== null)), true)
-        })
-      });
-    }
-
     function drawStep(game, rows) {
       const mine = rowsFor(rows, game);
       const id = "step-" + game.id;
@@ -275,11 +248,11 @@
           labels: mine.map((row) => row.ts_label),
           datasets: [
             lineSet("Active tables", tables, BLUE, 3, { stepped: true }),
-            lineSet("Waitlist", waiting, GREEN, 2, { backgroundColor: FILL, fill: true })
+            lineSet("Waitlist", waiting, GREEN, 2, { backgroundColor: FILL, fill: true, stepped: true })
           ]
         },
         options: baseOptions({
-          x: { ticks: { maxTicksLimit: 5, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
+          x: { ticks: { maxTicksLimit: 4, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
           y: axis("", TICK, peak)
         })
       });
@@ -297,12 +270,12 @@
           labels: mine.map((row) => row.ts_label),
           datasets: [
             lineSet("Players per table", ratios, BLUE, 3, {
-              pointLabels: mine.map((row) => row[game.active])
+              pointLabels: mine.map((row, i) => (i === 0 || mine[i - 1][game.active] !== row[game.active] ? row[game.active] : null))
             })
           ]
         },
         options: baseOptions({
-          x: { ticks: { maxTicksLimit: 5, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
+          x: { ticks: { maxTicksLimit: 4, maxRotation: 0, color: TICK, font: { size: 10 } }, grid: { display: false } },
           y: Object.assign(axis("", TICK, Math.max(...ratios)), { ticks: { color: TICK, precision: 1 } })
         })
       });
@@ -332,7 +305,6 @@
     }
 
     function drawGame(game, rows) {
-      drawAxes(game, rows);
       drawStep(game, rows);
       drawRatio(game, rows);
       drawHour(game, rows);
@@ -367,7 +339,7 @@
         if (tables === null) {
           line.textContent = "No " + game.stake + " samples yet";
         } else {
-          line.textContent = game.stake + " " + tables + " tables · " + waiting + " waiting";
+          line.textContent = game.stake + " " + countPhrase(tables, "table", "tables") + " · " + waiting + " waiting";
         }
         drawGame(game, rows);
       });
