@@ -4720,5 +4720,13 @@
     "waitlist_players_1_3": 8,
     "active_tables": 3,
     "waitlist_players": 6
+  },
+  {
+    "ts": "2026-10-17T21:18:50-07:00",
+    "ts_label": "Oct 17 9:18pm",
+    "active_tables_1_3": 6,
+    "waitlist_players_1_3": 8,
+    "active_tables": 3,
+    "waitlist_players": 4
   }
 ]
