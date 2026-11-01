@@ -42,6 +42,7 @@
     .views { flex: 1; min-height: 0; display: grid; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 6px; }
     section { min-height: 0; display: grid; grid-template-columns: 92px 1fr; gap: 8px; }
     h2 { margin: 0; font-size: 0.78rem; font-weight: 600; }
+    h2 span { display: block; margin-top: 2px; color: var(--muted); font-size: 0.66rem; font-weight: 500; }
     .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; min-height: 0; height: 100%; }
     .card {
       background: var(--card);
@@ -77,7 +78,7 @@
     <p id="error" role="alert" hidden></p>
     <div class="views">
       <section>
-        <h2>Step and area</h2>
+        <h2>Step and area<span>7 days</span></h2>
         <div class="pair" id="pair-step"></div>
       </section>
       <section>
@@ -92,6 +93,7 @@
   </main>
   <script>
     const HISTORY_DAYS = 30;
+    const STEP_DAYS = 7;
     const RELOAD_MS = 10 * 60 * 1000;
     const BLUE = "#8eb7ff";
     const GREEN = "#b6e37a";
@@ -235,20 +237,54 @@
       charts[id] = new Chart(canvas, config);
     }
 
+    function hourlySteps(rows, game) {
+      const buckets = new Map();
+      rows.forEach((row) => {
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: "America/Los_Angeles",
+          year: "numeric", month: "2-digit", day: "2-digit",
+          hour: "2-digit", hourCycle: "h23"
+        }).formatToParts(new Date(row.ts));
+        const part = (type) => parts.find((item) => item.type === type).value;
+        const key = part("year") + part("month") + part("day") + part("hour");
+        if (!buckets.has(key)) {
+          buckets.set(key, {
+            label: new Intl.DateTimeFormat("en-US", {
+              timeZone: "America/Los_Angeles",
+              month: "short", day: "numeric", hour: "numeric"
+            }).format(new Date(row.ts)),
+            tables: [],
+            waiting: []
+          });
+        }
+        const bucket = buckets.get(key);
+        bucket.tables.push(row[game.active]);
+        if (num(row, game.wait) !== null) bucket.waiting.push(row[game.wait]);
+      });
+      return [...buckets.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map((entry) => entry[1]);
+    }
+
     function drawStep(game, rows) {
-      const mine = rowsFor(rows, game);
+      const cutoff = Date.now() - STEP_DAYS * 24 * 60 * 60 * 1000;
+      const hours = hourlySteps(rowsFor(rows, game).filter((row) => Date.parse(row.ts) >= cutoff), game);
       const id = "step-" + game.id;
-      if (!mine.length) return mount(id, null);
-      const tables = mine.map((row) => row[game.active]);
-      const waiting = mine.map((row) => num(row, game.wait));
-      const peak = Math.max(0, ...tables, ...waiting.filter((v) => v !== null));
+      if (!hours.length) return mount(id, null);
+      const tables = hours.map((bucket) => median(bucket.tables));
+      const waiting = hours.map((bucket) => (bucket.waiting.length ? median(bucket.waiting) : null));
+      const peak = Math.max(0, ...tables, ...waiting.filter((value) => value !== null));
       mount(id, {
         type: "line",
         data: {
-          labels: mine.map((row) => row.ts_label),
+          labels: hours.map((bucket) => bucket.label),
           datasets: [
-            lineSet("Active tables", tables, BLUE, 3, { stepped: true }),
-            lineSet("Waitlist", waiting, GREEN, 2, { backgroundColor: FILL, fill: true, stepped: true })
+            lineSet("Active tables", tables, BLUE, 2, { stepped: "after", pointRadius: 0, pointHoverRadius: 3 }),
+            lineSet("Waitlist", waiting, GREEN, 2, {
+              backgroundColor: FILL,
+              fill: true,
+              stepped: "after",
+              pointRadius: 0,
+              pointHoverRadius: 3
+            })
           ]
         },
         options: baseOptions({
