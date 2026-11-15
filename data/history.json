@@ -1,13 +1,5 @@
 [
   {
-    "ts": "2026-10-16T15:47:51-07:00",
-    "ts_label": "Oct 16 3:47pm",
-    "active_tables_1_3": 6,
-    "waitlist_players_1_3": 4,
-    "active_tables": 2,
-    "waitlist_players": 7
-  },
-  {
     "ts": "2026-10-16T15:57:51-07:00",
     "ts_label": "Oct 16 3:57pm",
     "active_tables_1_3": 6,
@@ -35622,5 +35614,13 @@
     "waitlist_players_1_3": 6,
     "active_tables": 1,
     "waitlist_players": 6
+  },
+  {
+    "ts": "2026-11-15T15:52:55-08:00",
+    "ts_label": "Nov 15 3:52pm",
+    "active_tables_1_3": 6,
+    "waitlist_players_1_3": 4,
+    "active_tables": 1,
+    "waitlist_players": 8
   }
 ]
